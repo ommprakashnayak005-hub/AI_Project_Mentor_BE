@@ -4,10 +4,6 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 
-# ---------------------------------------------------------
-# Common values
-# ---------------------------------------------------------
-
 PriorityValue = Literal[
     "Low",
     "Medium",
@@ -19,11 +15,19 @@ StatusValue = Literal[
     "In Progress",
     "Completed",
 ]
-
+AITaskType = Literal[
+    "Generate Project Plan",
+    "Break Requirement into Tasks",
+    "Recommend Next Task",
+    "Identify Project Blockers",
+    "Explain Implementation",
+    "Generate Testing Checklist",
+]
 
 # ---------------------------------------------------------
 # Project schemas
 # ---------------------------------------------------------
+
 
 class ProjectBase(BaseModel):
     project_name: str = Field(
@@ -31,9 +35,14 @@ class ProjectBase(BaseModel):
         max_length=150,
     )
 
-    description: str | None = None
+    description: str = Field(
+        min_length=5,
+    )
 
-    technology_stack: str | None = None
+    technology_stack: str = Field(
+        min_length=2,
+        max_length=300,
+    )
 
 
 class ProjectCreate(ProjectBase):
@@ -48,6 +57,7 @@ class ProjectResponse(ProjectBase):
     model_config = ConfigDict(from_attributes=True)
 
     project_id: int
+    created_at: datetime
 
 
 # ---------------------------------------------------------
@@ -67,9 +77,7 @@ class TaskBase(BaseModel):
     )
 
     priority: PriorityValue = "Medium"
-
     status: StatusValue = "Pending"
-
     ai_generated: bool = False
 
 
@@ -100,13 +108,11 @@ class TaskResponse(TaskBase):
 class AIPlanRequest(BaseModel):
     project_id: int = Field(gt=0)
 
-    task_type: str = Field(
-        min_length=2,
-        max_length=100,
-    )
+    task_type: AITaskType
 
     prompt: str = Field(
         min_length=5,
+        max_length=5000,
     )
 
 
