@@ -1,23 +1,28 @@
-import { useState } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout/Layout'
-import DashboardPage from './pages/DashboardPage'
-import ProjectsPage from './pages/ProjectsPage'
-import ProjectDetailsPage from './pages/ProjectDetailsPage'
-import TasksPage from './pages/TasksPage'
-import AIMentorPage from './pages/AIMentorPage'
+import { mockAIHistory, mockProjects, mockTasks } from './data/mockData'
 import AIHistoryPage from './pages/AIHistoryPage'
+import AIMentorPage from './pages/AIMentorPage'
+import DashboardPage from './pages/DashboardPage'
 import NotFoundPage from './pages/NotFoundPage'
-import { mockProjects, mockTasks, mockAIHistory } from './data/mockData'
+import ProjectDetailsPage from './pages/ProjectDetailsPage'
+import ProjectsPage from './pages/ProjectsPage'
+import TasksPage from './pages/TasksPage'
+import { getProjects } from './services/api'
 
 // Root application component.
 // Holds the shared mock-data state so that create/edit/delete operations
 // performed in one page are reflected across all pages.
 export default function App() {
-  const [projects, setProjects] = useState(mockProjects)
+  const [projects, setProjects] = useState([])
   const [tasks, setTasks] = useState(mockTasks)
   const [history, setHistory] = useState(mockAIHistory)
   const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    getProjects().then(setProjects).catch(() => setProjects(mockProjects))
+  }, [])
 
   return (
     <Layout onSearch={setSearch} searchValue={search}>

@@ -1,18 +1,17 @@
 import axios from 'axios'
 import {
+  buildMockAIResponse,
+  mockAIHistory,
   mockProjects,
   mockTasks,
-  mockAIHistory,
-  buildMockAIResponse,
 } from '../data/mockData'
 
 // Base URL for the future FastAPI backend.
 // Read from the Vite environment variable, with a safe local default.
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
-// Switch between mock data and real API calls.
-// Set VITE_USE_MOCK_DATA to "false" in .env to use the real backend later.
-const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA !== 'false'
+// Switch between mock data and real API calls. Mock data is opt-in.
+const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true'
 
 // Pre-configured axios instance for the future backend.
 const apiClient = axios.create({
@@ -64,7 +63,7 @@ export async function getDashboardStatistics() {
 export async function getProjects() {
   if (USE_MOCK_DATA) return mockDelay(mockProjects)
   const response = await apiClient.get('/api/projects')
-  return response.data
+  return response.data.map(toFrontendProject)
 }
 
 export async function getProjectById(projectId) {
@@ -73,25 +72,51 @@ export async function getProjectById(projectId) {
     return mockDelay(project)
   }
   const response = await apiClient.get(`/api/projects/${projectId}`)
-  return response.data
+  return toFrontendProject(response.data)
 }
 
 export async function createProject(projectData) {
   if (USE_MOCK_DATA) return mockDelay(projectData)
-  const response = await apiClient.post('/api/projects', projectData)
-  return response.data
+  const response = await apiClient.post('/api/projects', toBackendProject(projectData))
+  return toFrontendProject(response.data)
 }
 
 export async function updateProject(projectId, projectData) {
   if (USE_MOCK_DATA) return mockDelay({ ...projectData, id: projectId })
-  const response = await apiClient.put(`/api/projects/${projectId}`, projectData)
-  return response.data
+  const response = await apiClient.put(
+    `/api/projects/${projectId}`,
+    toBackendProject(projectData)
+  )
+  return toFrontendProject(response.data)
 }
 
 export async function deleteProject(projectId) {
   if (USE_MOCK_DATA) return mockDelay({ success: true, id: projectId })
   const response = await apiClient.delete(`/api/projects/${projectId}`)
   return response.data
+}
+
+function toBackendProject(project) {
+  return {
+    project_name: project.name,
+    description: project.description,
+    technology_stack: Array.isArray(project.techStack)
+      ? project.techStack.join(', ')
+      : project.techStack,
+  }
+}
+
+function toFrontendProject(project) {
+  return {
+    id: project.project_id,
+    name: project.project_name,
+    description: project.description,
+    techStack: project.technology_stack
+      .split(',')
+      .map((technology) => technology.trim())
+      .filter(Boolean),
+    createdAt: project.created_at.slice(0, 10),
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -152,3 +177,4 @@ export async function getAIHistory(projectId) {
 }
 
 export { BASE_URL, USE_MOCK_DATA }
+

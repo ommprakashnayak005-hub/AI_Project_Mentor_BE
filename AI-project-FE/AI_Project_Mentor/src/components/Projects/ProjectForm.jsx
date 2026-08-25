@@ -38,7 +38,7 @@ export default function ProjectForm({ initialData, onSave, onCancel }) {
   return (
     <form onSubmit={handleSubmit} noValidate>
       <div className="form-group">
-        <label className="form-label" htmlFor="project-name">Project Name</label>
+        <label className="form-label" htmlFor="project_name">Project Name</label>
         <input
           id="project-name"
           className="form-input"

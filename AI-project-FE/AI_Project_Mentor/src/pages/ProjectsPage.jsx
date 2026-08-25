@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Modal from '../components/Common/Modal'
 import ConfirmDialog from '../components/Common/ConfirmDialog'
 import EmptyState from '../components/Common/EmptyState'
-import ProjectForm from '../components/Projects/ProjectForm'
+import Modal from '../components/Common/Modal'
 import SuccessMessage from '../components/Common/SuccessMessage'
+import ProjectForm from '../components/Projects/ProjectForm'
+import { createProject, deleteProject, updateProject } from '../services/api'
 
 // Projects page: list of projects as cards with create / edit / delete actions.
 export default function ProjectsPage({ projects, setProjects }) {
@@ -14,27 +15,29 @@ export default function ProjectsPage({ projects, setProjects }) {
   const [deleting, setDeleting] = useState(null)
   const [success, setSuccess] = useState('')
 
-  function handleCreate(data) {
-    const newProject = {
-      ...data,
-      id: `P-${String(projects.length + 1).padStart(3, '0')}`,
-      createdAt: new Date().toISOString().slice(0, 10),
-    }
-    setProjects([...projects, newProject])
+  async function handleCreate(data) {
+    const newProject = await createProject(data)
+    setProjects((currentProjects) => [...currentProjects, newProject])
     setShowCreate(false)
     setSuccess('Project created successfully.')
   }
 
-  function handleEdit(data) {
-    setProjects(
-      projects.map((p) => (p.id === editing.id ? { ...p, ...data } : p))
+  async function handleEdit(data) {
+    const updatedProject = await updateProject(editing.id, data)
+    setProjects((currentProjects) =>
+      currentProjects.map((project) =>
+        project.id === editing.id ? updatedProject : project
+      )
     )
     setEditing(null)
     setSuccess('Project updated successfully.')
   }
 
-  function handleDelete() {
-    setProjects(projects.filter((p) => p.id !== deleting.id))
+  async function handleDelete() {
+    await deleteProject(deleting.id)
+    setProjects((currentProjects) =>
+      currentProjects.filter((project) => project.id !== deleting.id)
+    )
     setDeleting(null)
     setSuccess('Project deleted successfully.')
   }
